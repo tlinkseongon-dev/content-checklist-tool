@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Content Checklist Tool</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue-50:  #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --slate-50:  #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --green-50:  #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --red-50:  #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-600: #dc2626;
+  --amber-50:  #fffbeb;
+  --amber-200: #fde68a;
+  --amber-600: #d97706;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.10);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,.16);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  background: #eef4fb;
+  color: var(--slate-800);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--blue-50); }
+::-webkit-scrollbar-thumb { background: var(--blue-200); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--blue-400); }
+
+/* ── HEADER ── */
+.header {
+  background: #fff;
+  border-bottom: 1px solid var(--blue-100);
+  padding: 13px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: var(--shadow-sm);
+}
+
+.header-brand { display: flex; align-items: center; gap: 8px; }
+.header-brand h1 { font-size: 1.05rem; font-weight: 700; color: var(--blue-700); }
+.header-brand .tagline { font-size: 0.76rem; color: var(--slate-400); }
+
+.api-row { display: flex; align-items: center; gap: 7px; }
+.api-row label { font-size: 0.76rem; color: var(--slate-500); white-space: nowrap; }
+.api-row input {
+  width: 240px; padding: 6px 10px;
+  border: 1px solid var(--blue-200); border-radius: var(--radius-sm);
+  font-size: 0.8rem; background: var(--blue-50); color: var(--slate-800);
+  font-family: inherit; transition: border-color .15s;
+}
+.api-row input:focus { outline: none; border-color: var(--blue-500); background: #fff; }
+
+/* ── LAYOUT ── */
+.layout {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* ── CARD ── */
+.card {
+  background: #fff;
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.card + .card { margin-top: 20px; }
+
+.card-header {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 14px;
+}
+
+.card-title {
+  font-size: 0.9rem; font-weight: 600;
+  color: var(--blue-700); display: flex; align-items: center; gap: 6px;
+}
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 14px; border: none; border-radius: var(--radius-sm);
+  font-size: 0.8rem; font-weight: 500; cursor: pointer;
+  transition: background .15s, transform .1s, box-shadow .15s;
+  white-space: nowrap; font-family: inherit;
+}
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.btn-xs { padding: 4px 8px; font-size: .72rem; }
+.btn-sm { padding: 5px 10px; font-size: .78rem; }
+
+.btn-primary   { background: var(--blue-500); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--blue-600); }
+
+.btn-success   { background: var(--green-600); color: #fff; }
+.btn-success:hover:not(:disabled) { background: var(--green-700); }
+
+.btn-secondary { background: var(--slate-100); color: var(--slate-600); }
+.btn-secondary:hover:not(:disabled) { background: var(--slate-200); }
+
+.btn-ghost { background: transparent; color: var(--slate-500); border: 1px solid var(--slate-200); }
+.btn-ghost:hover:not(:disabled) { background: var(--slate-100); color: var(--slate-700); }
+
+.btn-ai {
+  background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff;
+  font-weight: 600;
+}
+.btn-ai:hover:not(:disabled) {
+  background: linear-gradient(135deg, #6d28d9, #4338ca);
+  box-shadow: 0 4px 14px rgba(79,70,229,.4);
+}
+
+/* ── ARTICLE ── */
+#articleInput {
+  width: 100%; min-height: 360px;
+  padding: 14px; border: 1px solid var(--blue-200);
+  border-radius: var(--radius-md); font-size: 0.88rem;
+  line-height: 1.7; font-family: inherit;
+  background: var(--blue-50); color: var(--slate-800);
+  transition: border-color .15s, background .15s;
+  overflow-y: auto; cursor: text; word-break: break-word;
+}
+#articleInput:focus { outline: none; border-color: var(--blue-500); background: #fff; }
+#articleInput:empty::before {
+  content: attr(data-placeholder);
+  color: var(--slate-400); pointer-events: none; display: block;
+}
+#articleInput ul, #articleInput ol { padding-left: 22px; margin: 4px 0; }
+#articleInput li { margin: 2px 0; }
+#articleInput h1,#articleInput h2,#articleInput h3,
+#articleInput h4,#articleInput h5,#articleInput h6 { margin: 6px 0 3px; }
+#articleInput img { max-width: 100%; height: auto; display: block; margin: 6px 0; border-radius: var(--radius-sm); }
+
+.stats-bar { display: flex; gap: 18px; margin-top: 10px; flex-wrap: wrap; }
+.stat { display: flex; align-items: center; gap: 5px; font-size: 0.78rem; color: var(--slate-500); }
+.stat-val { font-weight: 700; color: var(--blue-600); }
+
+/* ── SCORE PANEL ── */
+.score-panel {
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-700));
+  border-radius: var(--radius-md); padding: 18px;
+  color: #fff; margin-bottom: 16px; text-align: center;
+}
+.score-main { font-size: 2.5rem; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+.score-label { font-size: 0.8rem; opacity: .85; margin-top: 4px; }
+
+.score-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
+.score-cell { background: rgba(255,255,255,.15); border-radius: var(--radius-sm); padding: 8px 6px; }
+.score-cell-val   { font-size: 1.1rem; font-weight: 700; }
+.score-cell-label { font-size: 0.68rem; opacity: .8; margin-top: 2px; }
+.score-cell-val.req { color: #fca5a5; }
+.score-cell-val.rec { color: #fde68a; }
+.score-cell-val.opt { color: #6ee7b7; }
+
+.action-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── AI STATUS ── */
+.ai-status {
+  display: none; margin-top: 12px;
+  padding: 10px 13px; border-radius: var(--radius-sm);
+  font-size: 0.8rem; align-items: center; gap: 8px;
+}
+.ai-status.loading { display: flex; background: var(--blue-50);  border: 1px solid var(--blue-200);  color: var(--blue-600); }
+.ai-status.success { display: flex; background: var(--green-50); border: 1px solid var(--green-200); color: var(--green-700); }
+.ai-status.error   { display: flex; background: var(--red-50);   border: 1px solid var(--red-200);   color: var(--red-600); }
+
+/* ── BADGE ── */
+.badge {
+  display: inline-block; padding: 2px 7px;
+  border-radius: 20px; font-size: 0.68rem; font-weight: 600; white-space: nowrap;
+}
+.badge-required    { background: var(--red-50);   color: var(--red-600);   border: 1px solid var(--red-200); }
+.badge-recommended { background: var(--amber-50); color: var(--amber-600); border: 1px solid var(--amber-200); }
+.badge-optional    { background: var(--green-50); color: var(--green-600); border: 1px solid var(--green-200); }
+
+/* ── CRITERIA ITEM ── */
+.criteria-item {
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-md);
+  padding: 12px 14px; margin-bottom: 10px;
+  background: #fff; transition: box-shadow .2s, border-color .2s;
+}
+.criteria-item:hover { box-shadow: var(--shadow-md); border-color: var(--blue-200); }
+.criteria-item.result-pass { border-left: 3px solid var(--green-600); }
+.criteria-item.result-fail { border-left: 3px solid var(--red-600); }
+
+.ci-top {
+  display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 8px; margin-bottom: 4px;
+}
+.ci-left { display: flex; align-items: flex-start; gap: 7px; flex: 1; flex-wrap: wrap; }
+.ci-name { font-weight: 600; font-size: 0.875rem; color: var(--slate-800); line-height: 1.4; }
+.ci-desc { font-size: 0.78rem; color: var(--slate-500); margin-bottom: 8px; line-height: 1.5; }
+.ci-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+/* ── AI RESULT ── */
+.ai-result {
+  display: flex; align-items: flex-start; gap: 7px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  font-size: 0.78rem; line-height: 1.5; margin-top: 6px;
+}
+.ai-result.pass    { background: var(--green-50); border: 1px solid var(--green-200); color: var(--green-700); }
+.ai-result.fail    { background: var(--red-50);   border: 1px solid var(--red-200);   color: var(--red-600); }
+.ai-result.pending {
+  background: var(--slate-50); border: 1px solid var(--slate-200);
+  color: var(--slate-400); font-style: italic;
+}
+.ai-result.loading { background: var(--blue-50); border: 1px solid var(--blue-200); color: var(--blue-500); }
+.ai-result-icon { flex-shrink: 0; font-size: 0.9rem; }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 28px 16px; color: var(--slate-400); font-size: 0.83rem; }
+
+/* ── MODAL ── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(15,23,42,.45);
+  z-index: 200; display: flex; align-items: center;
+  justify-content: center; padding: 20px;
+  backdrop-filter: blur(2px); animation: fadeIn .15s ease;
+}
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.modal {
+  background: #fff; border-radius: var(--radius-lg);
+  padding: 24px; width: 100%; max-width: 480px;
+  box-shadow: var(--shadow-lg); animation: slideUp .18s ease;
+}
+.modal-title { font-size: 1rem; font-weight: 700; color: var(--blue-700); margin-bottom: 18px; }
+
+.form-field { margin-bottom: 13px; }
+.form-label { display: block; font-size: 0.78rem; font-weight: 500; color: var(--slate-600); margin-bottom: 5px; }
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 8px 11px;
+  border: 1px solid var(--blue-200); border-radius: var(--radius-sm);
+  font-size: 0.85rem; font-family: inherit; color: var(--slate-800);
+  background: var(--blue-50); transition: border-color .15s, background .15s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none; border-color: var(--blue-500); background: #fff;
+}
+.form-textarea { min-height: 72px; resize: vertical; line-height: 1.5; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 10px 18px; border-radius: var(--radius-md);
+  font-size: 0.82rem; font-weight: 500; z-index: 999; color: #fff;
+  opacity: 0; transform: translateY(10px);
+  transition: opacity .2s, transform .2s;
+  pointer-events: none; max-width: 320px; box-shadow: var(--shadow-md);
+}
+.toast.visible  { opacity: 1; transform: translateY(0); }
+.toast.success  { background: var(--green-600); }
+.toast.error    { background: var(--red-600); }
+.toast.info     { background: var(--slate-700); }
+
+/* ── SPINNER ── */
+.spinner {
+  display: inline-block; width: 13px; height: 13px;
+  border: 2px solid rgba(59,130,246,.25);
+  border-top-color: var(--blue-500);
+  border-radius: 50%; animation: spin .65s linear infinite; flex-shrink: 0;
+}
+.spinner-w { border-color: rgba(255,255,255,.3); border-top-color: #fff; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .api-row input { width: 170px; }
+  .header-brand .tagline { display: none; }
+}
+@media (max-width: 480px) {
+  .header { padding: 10px 14px; }
+  .layout { padding: 12px; gap: 14px; }
+  .card   { padding: 14px; }
+  .score-main { font-size: 2rem; }
+  .api-row input { width: 130px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════ HEADER ════════ -->
+<header class="header">
+  <div class="header-brand">
+    <h1>✍️ Content Checklist Tool</h1>
+    <span class="tagline">Kiểm tra chất lượng bài viết bằng AI</span>
+  </div>
+  <div class="api-row">
+    <label for="apiKeyInput">🔑 Groq API Key:</label>
+    <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" />
+    <button class="btn btn-ghost btn-sm" onclick="saveApiKey()">Lưu</button>
+  </div>
+</header>
+
+<!-- ════════ LAYOUT ════════ -->
+<main class="layout">
+
+  <!-- LEFT: bài viết + kết quả -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📄 Nội dung bài viết</span>
+        <button class="btn btn-ghost btn-xs" onclick="clearArticle()">✕ Xóa</button>
+      </div>
+      <div id="articleInput"
+        contenteditable="true"
+        spellcheck="false"
+        data-placeholder='Dán nội dung bài viết vào đây (giữ nguyên định dạng) rồi nhấn "Phân tích bằng AI"...'
+        oninput="onArticleInput()"
+      ></div>
+      <div class="stats-bar">
+        <span class="stat">Số từ: <span class="stat-val" id="wc">0</span></span>
+        <span class="stat">Ký tự: <span class="stat-val" id="cc">0</span></span>
+        <span class="stat">Ký tự (không khoảng trắng): <span class="stat-val" id="cnc">0</span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">📊 Kết quả đánh giá</div>
+
+      <div class="score-panel">
+        <div class="score-main" id="scoreMain">— / —</div>
+        <div class="score-label" id="scoreLabel">Nhấn "Phân tích" để bắt đầu</div>
+        <div class="score-grid">
+          <div class="score-cell">
+            <div class="score-cell-val req" id="scoreReq">—/—</div>
+            <div class="score-cell-label">Bắt buộc</div>
+          </div>
+          <div class="score-cell">
+            <div class="score-cell-val rec" id="scoreRec">—/—</div>
+            <div class="score-cell-label">Khuyến nghị</div>
+          </div>
+          <div class="score-cell">
+            <div class="score-cell-val opt" id="scoreOpt">—/—</div>
+            <div class="score-cell-label">Tùy chọn</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-ai" id="analyzeBtn" onclick="analyzeWithAI()">
+          🤖 Phân tích bằng AI
+        </button>
+        <button class="btn btn-success" id="copyBtn" onclick="copyReport()" style="display:none">
+          📋 Copy báo cáo
+        </button>
+        <button class="btn btn-secondary" onclick="resetAll()">🔄 Reset</button>
+      </div>
+
+      <div class="ai-status" id="aiStatus"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: checklist -->
+  <div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">☑️ Checklist tiêu chí (<span id="criteriaCount">0</span>)</span>
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()">＋ Thêm</button>
+      </div>
+      <div id="criteriaList"></div>
+      <div id="emptyState" class="empty-state" style="display:none">
+        Chưa có tiêu chí nào.<br>Nhấn <strong>＋ Thêm</strong> để bắt đầu.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ════════ MODAL ════════ -->
+<div class="modal-backdrop" id="modal" style="display:none" onclick="onBackdropClick(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modalTitle">Thêm tiêu chí mới</div>
+    <input type="hidden" id="editingId" />
+
+    <div class="form-field">
+      <label class="form-label">Tên tiêu chí <span style="color:var(--red-600)">*</span></label>
+      <input class="form-input" id="mName" type="text" placeholder="Vd: Tiêu đề hấp dẫn" maxlength="120" />
+    </div>
+    <div class="form-field">
+      <label class="form-label">Mô tả / Hướng dẫn kiểm tra</label>
+      <textarea class="form-textarea" id="mDesc" placeholder="Vd: Tiêu đề có từ khóa, gây tò mò, dưới 70 ký tự"></textarea>
+    </div>
+    <div class="form-field">
+      <label class="form-label">Mức độ ưu tiên</label>
+      <select class="form-select" id="mPriority">
+        <option value="required">🔴 Bắt buộc</option>
+        <option value="recommended">🟡 Khuyến nghị</option>
+        <option value="optional">🟢 Tùy chọn</option>
+      </select>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Hủy</button>
+      <button class="btn btn-primary" onclick="saveFromModal()">💾 Lưu tiêu chí</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ TOAST ════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ── CONSTANTS ── */
+const PRIORITY_LABEL = { required: 'Bắt buộc', recommended: 'Khuyến nghị', optional: 'Tùy chọn' };
+const PRIORITY_BADGE = { required: 'badge-required', recommended: 'badge-recommended', optional: 'badge-optional' };
+
+const DEFAULT_CRITERIA = [
+  // TRÌNH BÀY CHUNG
+  { name: 'Trình bày: Font chữ & căn lề',
+    desc: 'Font Arial, cỡ 11, căn lề đều 2 bên cho toàn bài',
+    priority: 'required' },
+  { name: 'Trình bày: Giãn đoạn & khoảng cách',
+    desc: 'Giãn đoạn 1.5; khoảng cách trước-sau 10pt cho toàn bài',
+    priority: 'required' },
+  { name: 'Trình bày: Độ dài đoạn',
+    desc: 'Mỗi đoạn tối đa 4 dòng. Tuyệt đối không để 1 dòng đơn lẻ',
+    priority: 'required' },
+  { name: 'Trình bày: Bullet points',
+    desc: 'Chỉ dùng bullet chấm tròn đen chuẩn của Google Docs; không trộn nhiều kiểu dấu trong 1 bài; không chèn ảnh/xuống dòng giữa các bullet',
+    priority: 'required' },
+  // CTA
+  { name: 'CTA: Nguyên tắc 3S',
+    desc: 'Simple (ngôn ngữ đơn giản) + Specific (nêu rõ lợi ích khi click) + Strong (dùng động từ mạnh: đăng ký, nhận, mua...)',
+    priority: 'required' },
+  { name: 'CTA: Số lượng tối thiểu',
+    desc: 'Mỗi bài viết có ít nhất 1 CTA',
+    priority: 'required' },
+  { name: 'CTA: Theo hành trình người dùng',
+    desc: 'Thiết kế mô hình CTA phù hợp với từng giai đoạn trong customer journey',
+    priority: 'recommended' },
+  { name: 'CTA: Internal link đa dạng',
+    desc: 'Ưu tiên Cách 1 (từ khóa chính xác trong câu). Chỉ dùng Cách 2 (toàn tiêu đề) hoặc Cách 3 (từ khóa biến thể) khi dàn ý yêu cầu hoặc có lý do rõ ràng',
+    priority: 'recommended' },
+  // NGƯỜI DÙNG
+  { name: 'Người dùng: Độ dài câu',
+    desc: 'Câu văn 20–30 từ (~1.5 dòng); đặt dấu câu ngắt nghỉ phù hợp',
+    priority: 'recommended' },
+  { name: 'Người dùng: FAQs',
+    desc: 'Ưu tiên thêm phần FAQs dựa trên Google Suggest, People Also Ask và search intent',
+    priority: 'recommended' },
+  { name: 'Người dùng: Cấu trúc đoạn văn',
+    desc: 'Đoạn 60–80 từ (3–5 dòng); mỗi đoạn trả lời đúng 1 truy vấn; câu chủ đề theo cấu trúc Chủ ngữ – Vị ngữ – Tân ngữ',
+    priority: 'required' },
+  { name: 'Người dùng: Câu dẫn sau Heading',
+    desc: 'Có đoạn văn dẫn dắt khái quát ngay sau mỗi H2, H3, H4',
+    priority: 'recommended' },
+  { name: 'Người dùng: Khái quát đầu đoạn',
+    desc: 'Bullet thường ≤2 dòng; bullet có in đậm ≤4 dòng. Luôn có câu tóm tắt đầu đoạn để người đọc lướt nhanh nắm nội dung',
+    priority: 'required' },
+  // META DESCRIPTION
+  { name: 'Meta desc: Đáp ứng insight',
+    desc: 'Trả lời được mong muốn thầm kín / insight của người tìm kiếm',
+    priority: 'required' },
+  { name: 'Meta desc: Tóm tắt nội dung',
+    desc: 'Tóm tắt được nội dung chính của bài viết',
+    priority: 'required' },
+  { name: 'Meta desc: Chứa từ khoá',
+    desc: 'Có chứa từ khoá chính hoặc từ khoá phụ',
+    priority: 'required' },
+  { name: 'Meta desc: Độ dài & định dạng',
+    desc: 'Dưới 165 ký tự; viết câu đầy đủ ngữ nghĩa; không dùng ký tự đặc biệt để tạo điểm nhấn',
+    priority: 'required' },
+  // MẬT ĐỘ TỪ KHOÁ
+  { name: 'Từ khoá: Mật độ từ khoá chính',
+    desc: 'Từ khoá chính xuất hiện 1–3% trong toàn bài',
+    priority: 'required' },
+  { name: 'Từ khoá: Từ khoá phụ',
+    desc: 'Từ khoá phụ xuất hiện ít nhất 1 lần trong bài',
+    priority: 'required' },
+  // HEADING
+  { name: 'H1: Độ dài',
+    desc: 'Tiêu đề H1 dưới 63 ký tự',
+    priority: 'required' },
+  { name: 'H1: Chứa từ khoá',
+    desc: 'H1 chứa từ khoá chính hoặc từ khoá phụ; ưu tiên đặt từ khoá ở đầu tiêu đề',
+    priority: 'required' },
+  { name: 'H1: Thể hiện search intent',
+    desc: 'Nội dung H1 thể hiện rõ ý định tìm kiếm / insight của người dùng',
+    priority: 'required' },
+  { name: 'H2/H3/H4: Từ khoá chính',
+    desc: 'Có ít nhất 1 H2 chứa từ khoá chính',
+    priority: 'required' },
+  { name: 'H3/H4: Từ khoá phụ & LSI',
+    desc: 'Ưu tiên đưa từ khoá phụ và từ khoá LSI vào H3, H4',
+    priority: 'recommended' },
+  // INTERNAL LINK
+  { name: 'Internal link: Bài viết liên quan',
+    desc: 'Có ít nhất 1 internal link dẫn đến bài viết cùng chủ đề',
+    priority: 'required' },
+  { name: 'Internal link: Trang sản phẩm',
+    desc: 'Link về các trang sản phẩm/dịch vụ được nhắc tới trong bài',
+    priority: 'recommended' },
+  // CHÍNH TẢ & DẤU CÂU
+  { name: 'Dấu câu: Dấu (…)',
+    desc: 'Không thêm dấu (,) hay khoảng cách trước dấu (…); không dùng "v.v…"',
+    priority: 'required' },
+  { name: 'Dấu câu: Viết hoa sau dấu hai chấm',
+    desc: 'Luôn viết hoa chữ cái đầu tiên sau dấu hai chấm (:), không có ngoại lệ',
+    priority: 'required' },
+  { name: 'Dấu câu: Mô tả ảnh',
+    desc: 'Mô tả ảnh (alt text / caption) cần có dấu chấm câu kết thúc',
+    priority: 'required' },
+  { name: 'Dấu câu: Dấu chấm (.)',
+    desc: 'Chỉ dùng dấu chấm để kết thúc câu hoàn chỉnh trong đoạn văn có ≥2 câu; không đặt dấu chấm cuối mỗi ý trong bullet list',
+    priority: 'required' },
+  { name: 'Dấu câu: Dấu gạch chéo (/)',
+    desc: 'Không cách trước và sau dấu (/). VD đúng: chi tiêu/thanh toán — VD sai: chi tiêu/ thanh toán',
+    priority: 'required' },
+  { name: 'Dấu câu: Dấu gạch ngang ( – )',
+    desc: 'Cách 1 khoảng trắng cả trước lẫn sau. Dùng để chú thích, giải nghĩa hoặc liệt kê ý. VD: 1h – 2h',
+    priority: 'required' },
+  { name: 'Dấu câu: Dấu gạch nối (-)',
+    desc: 'Không cách trước và sau. Chỉ dùng để nối âm tiết phiên âm. VD: Lê-nin, No-show',
+    priority: 'required' },
+  { name: 'Dấu câu: Dấu chấm phẩy (;)',
+    desc: 'Không cách trước dấu (;); cách 1 khoảng trắng sau dấu (;)',
+    priority: 'required' },
+  { name: 'Dấu câu: Dấu hỏi chấm (?)',
+    desc: 'Không cách trước dấu (?); cách 1 khoảng trắng sau dấu (?)',
+    priority: 'required' },
+];
+
+/* ── STATE ── */
+let criteria    = [];
+let evaluations = {}; // { id: { aiStatus: 'pass'|'fail'|'pending', aiReason: '' } }
+let analyzed    = false;
+
+/* ── UTILS ── */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function getEval(id) {
+  if (!evaluations[id]) evaluations[id] = { aiStatus: 'pending', aiReason: '' };
+  return evaluations[id];
+}
+
+/* ── STORAGE ── */
+function loadState() {
+  try {
+    const c = localStorage.getItem('cct_criteria');
+    criteria = c ? JSON.parse(c) : DEFAULT_CRITERIA.map(x => ({ ...x, id: uid() }));
+  } catch { criteria = DEFAULT_CRITERIA.map(x => ({ ...x, id: uid() })); }
+
+  try {
+    const e = localStorage.getItem('cct_evals');
+    evaluations = e ? JSON.parse(e) : {};
+    analyzed = Object.values(evaluations).some(v => v.aiStatus !== 'pending');
+  } catch { evaluations = {}; }
+
+  const art = localStorage.getItem('cct_article') || '';
+  if (art) {
+    document.getElementById('articleInput').innerHTML = art;
+    refreshStats(document.getElementById('articleInput').innerText || '');
+  }
+
+  const key = localStorage.getItem('cct_apikey') || '';
+  if (key) document.getElementById('apiKeyInput').value = key;
+}
+
+function saveCriteria() { localStorage.setItem('cct_criteria', JSON.stringify(criteria)); }
+function saveEvals()    { localStorage.setItem('cct_evals',    JSON.stringify(evaluations)); }
+
+function saveApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k) { toast('API key không được để trống', 'error'); return; }
+  localStorage.setItem('cct_apikey', k);
+  toast('Đã lưu API key', 'success');
+}
+
+/* ── ARTICLE ── */
+function getArticleText() { return document.getElementById('articleInput').innerText || ''; }
+function getArticleHtml() { return document.getElementById('articleInput').innerHTML || ''; }
+
+function onArticleInput() {
+  const text = getArticleText();
+  refreshStats(text);
+  localStorage.setItem('cct_article', getArticleHtml());
+}
+
+function refreshStats(text) {
+  document.getElementById('wc').textContent  = (text.trim() ? text.trim().split(/\s+/).length : 0).toLocaleString('vi');
+  document.getElementById('cc').textContent  = text.length.toLocaleString('vi');
+  document.getElementById('cnc').textContent = text.replace(/\s+/g,'').length.toLocaleString('vi');
+}
+
+function clearArticle() {
+  if (!getArticleText().trim()) return;
+  if (!confirm('Xóa toàn bộ nội dung bài viết?')) return;
+  document.getElementById('articleInput').innerHTML = '';
+  refreshStats('');
+  localStorage.removeItem('cct_article');
+}
+
+function cleanPastedHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const allowed = new Set(['P','BR','STRONG','B','EM','I','U','S',
+    'H1','H2','H3','H4','H5','H6','UL','OL','LI','BLOCKQUOTE','TABLE','TR','TD','TH','TBODY','THEAD','IMG']);
+  function walk(node) {
+    Array.from(node.childNodes).forEach(child => {
+      if (child.nodeType === 1) {
+        const isImg = child.tagName === 'IMG';
+        const src = child.getAttribute('src');
+        const alt = child.getAttribute('alt') || '';
+        child.removeAttribute('style');
+        child.removeAttribute('class');
+        child.removeAttribute('id');
+        child.removeAttribute('dir');
+        child.removeAttribute('data-list');
+        if (isImg && src) {
+          child.setAttribute('src', src);
+          child.setAttribute('alt', alt);
+          child.style.maxWidth = '100%';
+        }
+        walk(child);
+        if (!allowed.has(child.tagName)) {
+          const frag = document.createDocumentFragment();
+          while (child.firstChild) frag.appendChild(child.firstChild);
+          child.parentNode.replaceChild(frag, child);
+        }
+      }
+    });
+  }
+  walk(tmp);
+  return tmp.innerHTML;
+}
+
+/* ── RENDER ── */
+function render() {
+  const list  = document.getElementById('criteriaList');
+  const empty = document.getElementById('emptyState');
+  document.getElementById('criteriaCount').textContent = criteria.length;
+
+  if (!criteria.length) {
+    list.innerHTML = '';
+    empty.style.display = 'block';
+    updateScore();
+    return;
+  }
+  empty.style.display = 'none';
+
+  list.innerHTML = criteria.map((c) => {
+    const ev = getEval(c.id);
+    let resultHtml, itemClass = '';
+
+    if (ev.aiStatus === 'pass') {
+      itemClass = 'result-pass';
+      resultHtml = `<div class="ai-result pass">
+        <span class="ai-result-icon">✅</span>
+        <span><strong>Đạt</strong>${ev.aiReason ? ' — ' + esc(ev.aiReason) : ''}</span>
+      </div>`;
+    } else if (ev.aiStatus === 'fail') {
+      itemClass = 'result-fail';
+      resultHtml = `<div class="ai-result fail">
+        <span class="ai-result-icon">❌</span>
+        <span><strong>Không đạt</strong>${ev.aiReason ? ' — ' + esc(ev.aiReason) : ''}</span>
+      </div>`;
+    } else if (ev.aiStatus === 'loading') {
+      resultHtml = `<div class="ai-result loading">
+        <span class="ai-result-icon"><span class="spinner"></span></span>
+        <span>Đang đánh giá...</span>
+      </div>`;
+    } else {
+      resultHtml = `<div class="ai-result pending">
+        <span class="ai-result-icon">⏳</span>
+        <span>Chưa phân tích — nhấn "Phân tích bằng AI" để bắt đầu</span>
+      </div>`;
+    }
+
+    return `
+    <div class="criteria-item ${itemClass}" id="ci-${c.id}">
+      <div class="ci-top">
+        <div class="ci-left">
+          <span class="badge ${PRIORITY_BADGE[c.priority]}">${PRIORITY_LABEL[c.priority]}</span>
+          <span class="ci-name">${esc(c.name)}</span>
+        </div>
+        <div class="ci-actions">
+          <button class="btn btn-ghost btn-xs" onclick="openEditModal('${c.id}')" title="Chỉnh sửa">✏️</button>
+          <button class="btn btn-ghost btn-xs" onclick="deleteCriteria('${c.id}')" title="Xóa">🗑️</button>
+        </div>
+      </div>
+      ${c.desc ? `<div class="ci-desc">${esc(c.desc)}</div>` : ''}
+      ${resultHtml}
+    </div>`;
+  }).join('');
+
+  updateScore();
+}
+
+/* ── SCORE ── */
+function updateScore() {
+  if (!analyzed) return;
+
+  let total = criteria.length, passed = 0;
+  let rT = 0, rP = 0, rcT = 0, rcP = 0, oT = 0, oP = 0;
+
+  criteria.forEach(c => {
+    const ok = (evaluations[c.id] || {}).aiStatus === 'pass';
+    if (ok) passed++;
+    if      (c.priority === 'required')    { rT++;  if (ok) rP++; }
+    else if (c.priority === 'recommended') { rcT++; if (ok) rcP++; }
+    else                                   { oT++;  if (ok) oP++; }
+  });
+
+  document.getElementById('scoreMain').textContent  = `${passed} / ${total}`;
+  document.getElementById('scoreLabel').textContent = 'tiêu chí đạt yêu cầu';
+  document.getElementById('scoreReq').textContent   = `${rP}/${rT}`;
+  document.getElementById('scoreRec').textContent   = `${rcP}/${rcT}`;
+  document.getElementById('scoreOpt').textContent   = `${oP}/${oT}`;
+}
+
+/* ── AI ANALYSIS ── */
+async function analyzeWithAI() {
+  const apiKey  = document.getElementById('apiKeyInput').value.trim();
+  const article = getArticleHtml().trim();
+  const statusEl = document.getElementById('aiStatus');
+  const btn      = document.getElementById('analyzeBtn');
+
+  if (!apiKey)  { toast('Vui lòng nhập API key Groq', 'error'); return; }
+  if (!article) { toast('Vui lòng dán nội dung bài viết vào', 'error'); return; }
+  if (!criteria.length) { toast('Checklist đang trống', 'error'); return; }
+
+  localStorage.setItem('cct_apikey', apiKey);
+  analyzed = false;
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-w"></span> Đang phân tích...';
+
+  statusEl.className = 'ai-status loading';
+  statusEl.innerHTML = '<span class="spinner"></span> AI đang đọc bài viết và đánh giá từng tiêu chí — vui lòng chờ...';
+
+  // Đặt tất cả về trạng thái loading
+  criteria.forEach(c => { getEval(c.id).aiStatus = 'loading'; });
+  render();
+
+  const criteriaText = criteria.map((c, i) =>
+    `${i+1}. [${PRIORITY_LABEL[c.priority]}] ${c.name}${c.desc ? ': ' + c.desc : ''}`
+  ).join('\n');
+
+  const prompt = `Bạn là chuyên gia kiểm định nội dung SEO. Hãy đánh giá bài viết dưới đây theo từng tiêu chí.
+Bài viết được cung cấp ở định dạng HTML — hãy chú ý kỹ các thẻ định dạng (ul/ol/li để nhận biết kiểu bullet, strong/b để nhận biết in đậm, h1-h6 cho heading...) khi đánh giá các tiêu chí về trình bày và định dạng.
+
+CHECKLIST (${criteria.length} tiêu chí):
+${criteriaText}
+
+BÀI VIẾT (HTML):
+---
+${article}
+---
+
+Trả về JSON thuần (không markdown, không giải thích):
+{
+  "results": [
+    { "index": 1, "status": "pass", "reason": "Lý do ngắn gọn bằng tiếng Việt (1 câu)" },
+    { "index": 2, "status": "fail", "reason": "Lý do ngắn gọn bằng tiếng Việt (1 câu)" }
+  ]
+}
+
+Quy tắc: "pass" = đạt, "fail" = không đạt. index khớp số thứ tự (1-based). Đánh giá dựa hoàn toàn vào nội dung thực tế.`;
+
+  try {
+    const res = await fetch(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          temperature: 0.1,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      let msg = `Lỗi HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        msg = err?.error?.message || msg;
+        if (res.status === 401) msg = 'API key không hợp lệ. Kiểm tra lại key tại console.groq.com.';
+        if (res.status === 429) msg = 'Vượt giới hạn. Vui lòng thử lại sau vài giây.';
+      } catch {}
+      throw new Error(msg);
+    }
+
+    const data = await res.json();
+    const raw  = data?.choices?.[0]?.message?.content || '';
+
+    let parsed;
+    try {
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error();
+      parsed = JSON.parse(match[0]);
+    } catch {
+      throw new Error('AI trả về dữ liệu không đúng định dạng. Vui lòng thử lại.');
+    }
+
+    if (!Array.isArray(parsed?.results)) throw new Error('Cấu trúc phản hồi không hợp lệ.');
+
+    // Đặt lại pending trước rồi map kết quả
+    criteria.forEach(c => { getEval(c.id).aiStatus = 'pending'; getEval(c.id).aiReason = ''; });
+
+    parsed.results.forEach(r => {
+      const c = criteria[r.index - 1];
+      if (!c) return;
+      const ev = getEval(c.id);
+      ev.aiStatus = r.status === 'pass' ? 'pass' : 'fail';
+      ev.aiReason = String(r.reason || '').slice(0, 250);
+    });
+
+    analyzed = true;
+    saveEvals();
+    render();
+
+    document.getElementById('copyBtn').style.display = '';
+    statusEl.className = 'ai-status success';
+    statusEl.innerHTML = '✅ Phân tích hoàn tất! Kết quả hiển thị bên cạnh từng tiêu chí.';
+    toast('Phân tích AI hoàn tất!', 'success');
+
+  } catch (err) {
+    criteria.forEach(c => { if (getEval(c.id).aiStatus === 'loading') getEval(c.id).aiStatus = 'pending'; });
+    render();
+    statusEl.className = 'ai-status error';
+    statusEl.innerHTML = `❌ ${esc(err.message)}`;
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🤖 Phân tích bằng AI';
+  }
+}
+
+/* ── COPY REPORT ── */
+function copyReport() {
+  const article = getArticleText();
+  const words   = article.trim() ? article.trim().split(/\s+/).length : 0;
+  const now     = new Date().toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  let total = criteria.length, passed = 0;
+  let rT=0,rP=0,rcT=0,rcP=0,oT=0,oP=0;
+
+  const rows = criteria.map((c, i) => {
+    const ev  = evaluations[c.id] || {};
+    const ok  = ev.aiStatus === 'pass';
+    const sym = ev.aiStatus === 'pass' ? '✅ ĐẠT' : ev.aiStatus === 'fail' ? '❌ KHÔNG ĐẠT' : '⏳ CHƯA PHÂN TÍCH';
+
+    if (ok) passed++;
+    if      (c.priority === 'required')    { rT++;  if (ok) rP++; }
+    else if (c.priority === 'recommended') { rcT++; if (ok) rcP++; }
+    else                                   { oT++;  if (ok) oP++; }
+
+    let row = `${i+1}. [${PRIORITY_LABEL[c.priority]}] ${c.name}\n   → ${sym}`;
+    if (ev.aiReason) row += `\n   💬 ${ev.aiReason}`;
+    return row;
+  });
+
+  const text = [
+    '════════════════════════════════════════',
+    '   BÁO CÁO KIỂM TRA CONTENT (AI)',
+    '════════════════════════════════════════',
+    `📅 Thời gian : ${now}`,
+    `📊 Số từ     : ${words.toLocaleString('vi')} từ`,
+    '',
+    '── CHI TIẾT TỪNG TIÊU CHÍ ──────────────',
+    ...rows,
+    '',
+    '── TỔNG KẾT ─────────────────────────────',
+    `🏆 Tổng cộng  : ${passed}/${total} tiêu chí đạt`,
+    `🔴 Bắt buộc   : ${rP}/${rT}`,
+    `🟡 Khuyến nghị: ${rcP}/${rcT}`,
+    `🟢 Tùy chọn   : ${oP}/${oT}`,
+    '════════════════════════════════════════',
+  ].join('\n');
+
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(() => toast('Đã copy báo cáo!', 'success'));
+  } else {
+    const ta = Object.assign(document.createElement('textarea'), {
+      value: text, style: 'position:fixed;opacity:0;pointer-events:none'
+    });
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('Đã copy báo cáo!', 'success');
+  }
+}
+
+/* ── MODAL ── */
+function openAddModal() {
+  document.getElementById('modalTitle').textContent = 'Thêm tiêu chí mới';
+  document.getElementById('editingId').value = '';
+  document.getElementById('mName').value = '';
+  document.getElementById('mDesc').value = '';
+  document.getElementById('mPriority').value = 'required';
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('mName').focus(), 80);
+}
+
+function openEditModal(id) {
+  const c = criteria.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('modalTitle').textContent = 'Chỉnh sửa tiêu chí';
+  document.getElementById('editingId').value = id;
+  document.getElementById('mName').value = c.name;
+  document.getElementById('mDesc').value = c.desc || '';
+  document.getElementById('mPriority').value = c.priority;
+  document.getElementById('modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('mName').focus(), 80);
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function onBackdropClick(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+
+function saveFromModal() {
+  const name = document.getElementById('mName').value.trim();
+  if (!name) { toast('Vui lòng nhập tên tiêu chí', 'error'); document.getElementById('mName').focus(); return; }
+
+  const desc     = document.getElementById('mDesc').value.trim();
+  const priority = document.getElementById('mPriority').value;
+  const editId   = document.getElementById('editingId').value;
+
+  if (editId) {
+    const idx = criteria.findIndex(c => c.id === editId);
+    if (idx >= 0) criteria[idx] = { id: editId, name, desc, priority };
+  } else {
+    criteria.push({ id: uid(), name, desc, priority });
+  }
+
+  saveCriteria();
+  closeModal();
+  render();
+  toast(editId ? 'Đã cập nhật tiêu chí' : 'Đã thêm tiêu chí mới', 'success');
+}
+
+function deleteCriteria(id) {
+  const c = criteria.find(x => x.id === id);
+  if (!c || !confirm(`Xóa tiêu chí "${c.name}"?`)) return;
+  criteria = criteria.filter(x => x.id !== id);
+  delete evaluations[id];
+  saveCriteria(); saveEvals();
+  render();
+  toast('Đã xóa tiêu chí', 'info');
+}
+
+/* ── RESET ── */
+function resetAll() {
+  if (!confirm('Reset toàn bộ kết quả và bài viết?\n(Checklist tiêu chí vẫn được giữ nguyên.)')) return;
+  evaluations = {}; analyzed = false;
+  saveEvals();
+  document.getElementById('articleInput').value = '';
+  localStorage.removeItem('cct_article');
+  refreshStats('');
+  document.getElementById('scoreMain').textContent  = '— / —';
+  document.getElementById('scoreLabel').textContent = 'Nhấn "Phân tích" để bắt đầu';
+  document.getElementById('scoreReq').textContent   = '—/—';
+  document.getElementById('scoreRec').textContent   = '—/—';
+  document.getElementById('scoreOpt').textContent   = '—/—';
+  document.getElementById('aiStatus').className     = 'ai-status';
+  document.getElementById('aiStatus').innerHTML     = '';
+  document.getElementById('copyBtn').style.display  = 'none';
+  render();
+  toast('Đã reset xong', 'info');
+}
+
+/* ── TOAST ── */
+let _tt;
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  clearTimeout(_tt);
+  el.textContent = msg;
+  el.className = `toast visible ${type}`;
+  _tt = setTimeout(() => { el.className = 'toast'; }, 3200);
+}
+
+/* ── KEYBOARD ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && document.getElementById('modal').style.display !== 'none') {
+    e.preventDefault(); saveFromModal();
+  }
+});
+
+/* ── PASTE HANDLER ── */
+document.getElementById('articleInput').addEventListener('paste', function(e) {
+  e.preventDefault();
+
+  // Ưu tiên: ảnh từ clipboard (screenshot, copy ảnh)
+  const items = Array.from(e.clipboardData.items || []);
+  const imageItem = items.find(item => item.type.startsWith('image/'));
+  if (imageItem) {
+    const file = imageItem.getAsFile();
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      document.execCommand('insertHTML', false,
+        `<img src="${evt.target.result}" style="max-width:100%;" alt="ảnh">`);
+      onArticleInput();
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
+
+  // HTML (Google Docs, Word...)
+  const html  = e.clipboardData.getData('text/html');
+  const plain = e.clipboardData.getData('text/plain');
+  if (html) {
+    const clean = cleanPastedHtml(html);
+    document.execCommand('insertHTML', false, clean);
+  } else {
+    document.execCommand('insertText', false, plain);
+  }
+  onArticleInput();
+});
+
+/* ── BOOT ── */
+loadState();
+render();
+if (analyzed) {
+  document.getElementById('copyBtn').style.display = '';
+  updateScore();
+}
+</script>
+</body>
+</html>
