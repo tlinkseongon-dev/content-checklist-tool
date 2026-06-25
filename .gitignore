@@ -1,6 +1,3 @@
-# Conversation exports
-*.txt
-
 # System files
 Thumbs.db
 .DS_Store
