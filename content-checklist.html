@@ -311,6 +311,25 @@ body {
 .spinner-w { border-color: rgba(255,255,255,.3); border-top-color: #fff; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── AUTH ── */
+.auth-overlay {
+  position: fixed; inset: 0;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  z-index: 1000; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+}
+.auth-card {
+  background: #fff; border-radius: var(--radius-lg);
+  padding: 36px 32px; width: 100%; max-width: 380px;
+  box-shadow: var(--shadow-lg); animation: slideUp .2s ease;
+}
+.auth-logo  { font-size: 2.4rem; text-align: center; margin-bottom: 10px; }
+.auth-title { font-size: 1.15rem; font-weight: 700; color: var(--blue-700); text-align: center; margin-bottom: 5px; }
+.auth-subtitle { font-size: 0.8rem; color: var(--slate-400); text-align: center; margin-bottom: 24px; }
+.auth-error { color: var(--red-600); font-size: 0.78rem; min-height: 16px; margin: -4px 0 10px; }
+.user-info  { display: flex; align-items: center; gap: 8px; }
+.user-email { font-size: 0.76rem; color: var(--slate-500); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
   .layout { grid-template-columns: 1fr; }
@@ -325,8 +344,35 @@ body {
   .api-row input { width: 130px; }
 }
 </style>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 </head>
 <body>
+
+<!-- ════════ AUTH OVERLAY ════════ -->
+<div id="authOverlay" class="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">✍️</div>
+    <div class="auth-title">Content Checklist Tool</div>
+    <div class="auth-subtitle">Đăng nhập để sử dụng</div>
+
+    <div class="form-field">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="loginEmail" placeholder="email@example.com" autocomplete="email" />
+    </div>
+    <div class="form-field">
+      <label class="form-label">Mật khẩu</label>
+      <input class="form-input" type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <div id="authError" class="auth-error"></div>
+
+    <button class="btn btn-primary" id="loginBtn" onclick="signIn()" style="width:100%;justify-content:center;padding:10px 14px">
+      Đăng nhập
+    </button>
+  </div>
+</div>
 
 <!-- ════════ HEADER ════════ -->
 <header class="header">
@@ -338,6 +384,10 @@ body {
     <label for="apiKeyInput">🔑 Groq API Key:</label>
     <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" />
     <button class="btn btn-ghost btn-sm" onclick="saveApiKey()">Lưu</button>
+  </div>
+  <div class="user-info">
+    <span class="user-email" id="userEmail"></span>
+    <button class="btn btn-ghost btn-sm" onclick="signOutUser()">Đăng xuất</button>
   </div>
 </header>
 
@@ -451,6 +501,78 @@ body {
 
 <script>
 'use strict';
+
+/* ── FIREBASE CONFIG ── */
+// Thay các giá trị dưới đây bằng config Firebase của bạn:
+// Firebase Console → Project Settings → Your apps → SDK setup and configuration
+const firebaseConfig = {
+  apiKey:            "AIzaSyAUsTmzENNe1FUF3zjvDiwzBQaUkscYsCQ",
+  authDomain:        "claude-code-df15c.firebaseapp.com",
+  projectId:         "claude-code-df15c",
+  storageBucket:     "claude-code-df15c.firebasestorage.app",
+  messagingSenderId: "371370348736",
+  appId:             "1:371370348736:web:7fd2e3008b57b2ce8d9d25"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+
+let appInitialized = false;
+
+auth.onAuthStateChanged(user => {
+  const overlay = document.getElementById('authOverlay');
+  if (user) {
+    overlay.style.display = 'none';
+    document.getElementById('userEmail').textContent = user.email;
+    if (!appInitialized) {
+      appInitialized = true;
+      loadState();
+      render();
+      if (analyzed) {
+        document.getElementById('copyBtn').style.display = '';
+        updateScore();
+      }
+    }
+  } else {
+    overlay.style.display = 'flex';
+  }
+});
+
+async function signIn() {
+  const email    = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl    = document.getElementById('authError');
+  const btn      = document.getElementById('loginBtn');
+
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-w"></span> Đang đăng nhập...';
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
+  } catch (err) {
+    const msgs = {
+      'auth/user-not-found':     'Email không tồn tại.',
+      'auth/wrong-password':     'Mật khẩu không đúng.',
+      'auth/invalid-email':      'Email không hợp lệ.',
+      'auth/invalid-credential': 'Email hoặc mật khẩu không đúng.',
+      'auth/too-many-requests':  'Quá nhiều lần thử. Vui lòng thử lại sau.',
+      'auth/user-disabled':      'Tài khoản đã bị vô hiệu hóa.',
+    };
+    errEl.textContent = msgs[err.code] || 'Đăng nhập thất bại. Vui lòng thử lại.';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Đăng nhập';
+  }
+}
+
+async function signOutUser() {
+  await auth.signOut();
+  document.getElementById('userEmail').textContent = '';
+  appInitialized = false;
+  toast('Đã đăng xuất', 'info');
+}
 
 /* ── CONSTANTS ── */
 const PRIORITY_LABEL = { required: 'Bắt buộc', recommended: 'Khuyến nghị', optional: 'Tùy chọn' };
@@ -1069,13 +1191,13 @@ document.getElementById('articleInput').addEventListener('paste', function(e) {
   onArticleInput();
 });
 
-/* ── BOOT ── */
-loadState();
-render();
-if (analyzed) {
-  document.getElementById('copyBtn').style.display = '';
-  updateScore();
-}
+/* ── LOGIN ENTER KEY ── */
+document.getElementById('loginEmail').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+});
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') signIn();
+});
 </script>
 </body>
 </html>
