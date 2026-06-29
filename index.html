@@ -250,8 +250,42 @@ body {
   background: var(--slate-50); border: 1px solid var(--slate-200);
   color: var(--slate-400); font-style: italic;
 }
-.ai-result.loading { background: var(--blue-50); border: 1px solid var(--blue-200); color: var(--blue-500); }
+.ai-result.loading  { background: var(--blue-50);  border: 1px solid var(--blue-200);  color: var(--blue-500); }
+.ai-result.improve  { background: var(--amber-50); border: 1px solid var(--amber-200); color: var(--amber-600); }
 .ai-result-icon { flex-shrink: 0; font-size: 0.9rem; }
+
+/* ── CLAUDE SCORE PANEL ── */
+.btn-claude {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #fff;
+  font-weight: 600;
+}
+.btn-claude:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0284c7, #4f46e5);
+  box-shadow: 0 4px 14px rgba(99,102,241,.4);
+}
+.claude-score-panel {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  border-radius: var(--radius-md); padding: 18px;
+  color: #fff; margin-bottom: 16px; text-align: center;
+}
+.claude-score-number { font-size: 3rem; font-weight: 800; letter-spacing: -2px; line-height: 1; }
+.claude-score-label  { font-size: 0.8rem; opacity: .85; margin-top: 4px; }
+.claude-score-breakdown { display: flex; justify-content: center; gap: 20px; margin-top: 12px; }
+.claude-score-cell { background: rgba(255,255,255,.15); border-radius: var(--radius-sm); padding: 6px 12px; font-size: 0.78rem; }
+.claude-score-cell strong { display: block; font-size: 1rem; }
+
+.claude-criteria-item {
+  border: 1px solid var(--blue-100);
+  border-radius: var(--radius-md);
+  padding: 11px 13px; margin-bottom: 8px; background: #fff;
+}
+.claude-criteria-item.c-pass    { border-left: 3px solid var(--green-600); }
+.claude-criteria-item.c-improve { border-left: 3px solid var(--amber-600); }
+.claude-criteria-item.c-fail    { border-left: 3px solid var(--red-600); }
+.cc-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+.cc-name    { font-weight: 600; font-size: 0.85rem; color: var(--slate-800); }
+.cc-comment    { font-size: 0.78rem; color: var(--slate-600); line-height: 1.5; }
+.cc-suggestion { font-size: 0.78rem; color: var(--amber-600); margin-top: 4px; line-height: 1.5; }
 
 /* ── EMPTY STATE ── */
 .empty-state { text-align: center; padding: 28px 16px; color: var(--slate-400); font-size: 0.83rem; }
@@ -381,9 +415,14 @@ body {
     <span class="tagline">Kiểm tra chất lượng bài viết bằng AI</span>
   </div>
   <div class="api-row">
-    <label for="apiKeyInput">🔑 Groq API Key:</label>
+    <label for="apiKeyInput">🔑 Groq Key:</label>
     <input type="password" id="apiKeyInput" placeholder="gsk_..." autocomplete="off" />
     <button class="btn btn-ghost btn-sm" onclick="saveApiKey()">Lưu</button>
+  </div>
+  <div class="api-row">
+    <label for="claudeApiKeyInput">✨ Claude Key:</label>
+    <input type="password" id="claudeApiKeyInput" placeholder="sk-ant-..." autocomplete="off" />
+    <button class="btn btn-ghost btn-sm" onclick="saveClaudeApiKey()">Lưu</button>
   </div>
   <div class="user-info">
     <span class="user-email" id="userEmail"></span>
@@ -440,6 +479,9 @@ body {
         <button class="btn btn-ai" id="analyzeBtn" onclick="analyzeWithAI()">
           🤖 Phân tích bằng AI
         </button>
+        <button class="btn btn-claude" id="claudeScoreBtn" onclick="scoreWithClaude()">
+          ✨ Chấm điểm bằng AI
+        </button>
         <button class="btn btn-success" id="copyBtn" onclick="copyReport()" style="display:none">
           📋 Copy báo cáo
         </button>
@@ -450,7 +492,7 @@ body {
     </div>
   </div>
 
-  <!-- RIGHT: checklist -->
+  <!-- RIGHT: checklist + Claude scoring panel -->
   <div>
     <div class="card">
       <div class="card-header">
@@ -461,6 +503,25 @@ body {
       <div id="emptyState" class="empty-state" style="display:none">
         Chưa có tiêu chí nào.<br>Nhấn <strong>＋ Thêm</strong> để bắt đầu.
       </div>
+    </div>
+
+    <!-- Claude AI Scoring Panel -->
+    <div class="card" id="claudeScoreCard" style="display:none">
+      <div class="card-header">
+        <span class="card-title">✨ Kết quả chấm điểm (Claude AI)</span>
+        <button class="btn btn-ghost btn-xs" onclick="document.getElementById('claudeScoreCard').style.display='none'">✕ Đóng</button>
+      </div>
+      <div class="claude-score-panel" id="claudeScorePanel" style="display:none">
+        <div class="claude-score-number" id="claudeScoreNumber">—</div>
+        <div class="claude-score-label">Điểm tổng / 100</div>
+        <div class="claude-score-breakdown">
+          <div class="claude-score-cell"><strong id="cPassCount">—</strong>Đạt</div>
+          <div class="claude-score-cell"><strong id="cImproveCount">—</strong>Cần cải thiện</div>
+          <div class="claude-score-cell"><strong id="cFailCount">—</strong>Chưa đạt</div>
+        </div>
+      </div>
+      <div class="ai-status" id="claudeStatus"></div>
+      <div id="claudeResultsList" style="margin-top:10px"></div>
     </div>
   </div>
 
@@ -734,6 +795,9 @@ function loadState() {
 
   const key = localStorage.getItem('cct_apikey') || '';
   if (key) document.getElementById('apiKeyInput').value = key;
+
+  const claudeKey = localStorage.getItem('cct_claude_apikey') || '';
+  if (claudeKey) document.getElementById('claudeApiKeyInput').value = claudeKey;
 }
 
 function saveCriteria() { localStorage.setItem('cct_criteria', JSON.stringify(criteria)); }
@@ -743,7 +807,14 @@ function saveApiKey() {
   const k = document.getElementById('apiKeyInput').value.trim();
   if (!k) { toast('API key không được để trống', 'error'); return; }
   localStorage.setItem('cct_apikey', k);
-  toast('Đã lưu API key', 'success');
+  toast('Đã lưu Groq API key', 'success');
+}
+
+function saveClaudeApiKey() {
+  const k = document.getElementById('claudeApiKeyInput').value.trim();
+  if (!k) { toast('API key không được để trống', 'error'); return; }
+  localStorage.setItem('cct_claude_apikey', k);
+  toast('Đã lưu Claude API key', 'success');
 }
 
 /* ── ARTICLE ── */
@@ -1011,6 +1082,168 @@ Quy tắc: "pass" = đạt, "fail" = không đạt. index khớp số thứ tự
   }
 }
 
+/* ── CLAUDE SCORING ── */
+async function scoreWithClaude() {
+  const apiKey  = document.getElementById('claudeApiKeyInput').value.trim();
+  const article = getArticleHtml().trim();
+  const statusEl = document.getElementById('claudeStatus');
+  const btn      = document.getElementById('claudeScoreBtn');
+
+  if (!apiKey)  { toast('Vui lòng nhập Claude API key', 'error'); return; }
+  if (!article) { toast('Vui lòng dán nội dung bài viết vào', 'error'); return; }
+  if (!criteria.length) { toast('Checklist đang trống', 'error'); return; }
+
+  localStorage.setItem('cct_claude_apikey', apiKey);
+
+  const card = document.getElementById('claudeScoreCard');
+  card.style.display = '';
+  document.getElementById('claudeScorePanel').style.display = 'none';
+  document.getElementById('claudeResultsList').innerHTML = '';
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner spinner-w"></span> Đang chấm điểm...';
+
+  statusEl.className = 'ai-status loading';
+  statusEl.innerHTML = '<span class="spinner"></span> Claude đang đọc và chấm điểm bài viết — vui lòng chờ...';
+
+  const criteriaText = criteria.map((c, i) =>
+    `${i+1}. [${PRIORITY_LABEL[c.priority]}] ${c.name}${c.desc ? ': ' + c.desc : ''}`
+  ).join('\n');
+
+  const prompt = `Bạn là chuyên gia kiểm định nội dung SEO. Hãy chấm điểm bài viết dưới đây theo ${criteria.length} tiêu chí.
+Bài viết ở định dạng HTML — chú ý các thẻ (ul/ol/li, strong/b, h1-h6...) khi đánh giá.
+
+CHECKLIST (${criteria.length} tiêu chí):
+${criteriaText}
+
+BÀI VIẾT (HTML):
+---
+${article}
+---
+
+Trả về JSON thuần (không markdown, không giải thích thêm):
+{
+  "total_score": <số nguyên 0-100 dựa trên tỉ lệ đạt và mức độ ưu tiên>,
+  "results": [
+    {
+      "index": 1,
+      "status": "pass",
+      "comment": "Nhận xét ngắn bằng tiếng Việt (1-2 câu)",
+      "suggestion": ""
+    },
+    {
+      "index": 2,
+      "status": "improve",
+      "comment": "Nhận xét cụ thể về điểm cần cải thiện",
+      "suggestion": "Gợi ý cụ thể để cải thiện"
+    },
+    {
+      "index": 3,
+      "status": "fail",
+      "comment": "Lý do không đạt tiêu chí",
+      "suggestion": "Hướng dẫn sửa cụ thể"
+    }
+  ]
+}
+
+3 trạng thái: "pass" = đạt hoàn toàn, "improve" = đúng hướng nhưng cần cải thiện thêm, "fail" = chưa đạt. index khớp số thứ tự 1-based. Đánh giá dựa hoàn toàn vào nội dung thực tế trong bài viết.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!res.ok) {
+      let msg = `Lỗi HTTP ${res.status}`;
+      try {
+        const err = await res.json();
+        if (res.status === 401) msg = 'Claude API key không hợp lệ. Kiểm tra lại tại console.anthropic.com.';
+        else if (res.status === 429) msg = 'Vượt giới hạn. Vui lòng thử lại sau vài giây.';
+        else msg = err?.error?.message || msg;
+      } catch {}
+      throw new Error(msg);
+    }
+
+    const data = await res.json();
+    const raw  = data?.content?.[0]?.text || '';
+
+    let parsed;
+    try {
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error();
+      parsed = JSON.parse(match[0]);
+    } catch {
+      throw new Error('Claude trả về dữ liệu không đúng định dạng. Vui lòng thử lại.');
+    }
+
+    if (!Array.isArray(parsed?.results)) throw new Error('Cấu trúc phản hồi không hợp lệ.');
+
+    const score = typeof parsed.total_score === 'number'
+      ? Math.max(0, Math.min(100, Math.round(parsed.total_score))) : '—';
+
+    let passC = 0, improveC = 0, failC = 0;
+    parsed.results.forEach(r => {
+      if (r.status === 'pass') passC++;
+      else if (r.status === 'improve') improveC++;
+      else failC++;
+    });
+
+    document.getElementById('claudeScoreNumber').textContent = score;
+    document.getElementById('cPassCount').textContent    = passC;
+    document.getElementById('cImproveCount').textContent = improveC;
+    document.getElementById('cFailCount').textContent    = failC;
+    document.getElementById('claudeScorePanel').style.display = '';
+
+    const statusMap = {
+      pass:    { cls: 'c-pass',    icon: '✅', label: 'Đạt' },
+      improve: { cls: 'c-improve', icon: '🟡', label: 'Cần cải thiện' },
+      fail:    { cls: 'c-fail',    icon: '❌', label: 'Chưa đạt' },
+    };
+
+    document.getElementById('claudeResultsList').innerHTML = parsed.results.map(r => {
+      const c = criteria[r.index - 1];
+      if (!c) return '';
+      const s = statusMap[r.status] || statusMap.fail;
+      const suggestion = (r.suggestion && r.status !== 'pass')
+        ? `<div class="cc-suggestion">💡 ${esc(r.suggestion)}</div>` : '';
+      return `
+      <div class="claude-criteria-item ${s.cls}">
+        <div class="cc-header">
+          <span>${s.icon}</span>
+          <span class="badge ${PRIORITY_BADGE[c.priority]}">${PRIORITY_LABEL[c.priority]}</span>
+          <span class="cc-name">${esc(c.name)}</span>
+        </div>
+        <div class="cc-comment">${esc(r.comment || '')}</div>
+        ${suggestion}
+      </div>`;
+    }).join('');
+
+    statusEl.className = 'ai-status success';
+    statusEl.innerHTML = `✅ Chấm điểm hoàn tất! Điểm: <strong>${score}/100</strong>`;
+    toast('Chấm điểm AI hoàn tất!', 'success');
+
+  } catch (err) {
+    statusEl.className = 'ai-status error';
+    statusEl.innerHTML = `❌ ${esc(err.message)}`;
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '✨ Chấm điểm bằng AI';
+  }
+}
+
 /* ── COPY REPORT ── */
 function copyReport() {
   const article = getArticleText();
@@ -1138,6 +1371,7 @@ function resetAll() {
   document.getElementById('aiStatus').className     = 'ai-status';
   document.getElementById('aiStatus').innerHTML     = '';
   document.getElementById('copyBtn').style.display  = 'none';
+  document.getElementById('claudeScoreCard').style.display = 'none';
   render();
   toast('Đã reset xong', 'info');
 }
